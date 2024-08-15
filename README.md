@@ -20,13 +20,13 @@ Das Programm bietet verschiedene Möglichkeiten, die Karten nach bestimmten Krit
 **Filteroptionen:**
 - `-l0`: Zeigt nur Karten mit Level 0 (noch nie wiederholt).
 - `-l1`, `-l2`, `-l3`, `-l4`, `-l5`: Filtert Karten nach ihrem Level.
-- `-lg`: Filtert Karten mit Level größer als eine bestimmte Zahl.
-- `-lk`: Filtert Karten mit Level kleiner als eine bestimmte Zahl.
-- `-wk`: Filtert Karten, die nach einem bestimmten Zeitpunkt wiederholt wurden.
-- `-wg`: Filtert Karten, die vor einem bestimmten Zeitpunkt wiederholt wurden.
-- `-ck`: Filtert Karten, die nach einem bestimmten Zeitpunkt erstellt wurden.
-- `-cg`: Filtert Karten, die vor einem bestimmten Zeitpunkt erstellt wurden.
-- `-id`: Filtert Karten nach einer oder mehreren spezifischen IDs.
+- `-lg[Zahl]`: Filtert Karten mit Level größer als eine bestimmte Zahl.
+- `-lk[Zahl]`: Filtert Karten mit Level kleiner als eine bestimmte Zahl.
+- `-wk[Zahl]`: Filtert Karten, die nach einem bestimmten Zeitpunkt wiederholt wurden.
+- `-wg[Zahl]`: Filtert Karten, die vor einem bestimmten Zeitpunkt wiederholt wurden.
+- `-ck[Zahl]`: Filtert Karten, die nach einem bestimmten Zeitpunkt erstellt wurden.
+- `-cg[Zahl]`: Filtert Karten, die vor einem bestimmten Zeitpunkt erstellt wurden.
+- `-id[Leerzeichen][ID]`: Filtert Karten nach einer oder mehreren spezifischen IDs. IDs müssen durch Leerzeichen getrennt werden
 
 **Sortieroptionen:**
 - `-swauf`: Sortiert Karten nach Wiederholung aufsteigend.
