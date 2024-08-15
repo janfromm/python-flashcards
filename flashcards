@@ -68,31 +68,40 @@ def add_card(deck_name):
         deck_data.append(card)
         save_deck(deck_name, deck_data)
         
-        print(f"\nZuletzt hinzugefügt:\n{vorderseite} ({timestamp})\n")
-        more = input("Weitere Karte hinzufügen? (j/n): ").lower()
-        if more != 'j':
-            break
+        # print(f"\nZuletzt hinzugefügt:\n{vorderseite} ({timestamp})\n")
+        # more = input("Weitere Karte hinzufügen? (j/n): ").lower()
+        # if more != 'j':
+        #     break
 
 def learn(deck_name, filters, sorters):
     deck_data = load_deck(deck_name)
     
     last_learned_card = None
-    
+
     for filter_key, filter_value in filters.items():
-        if filter_key.startswith('l') and filter_key[1].isdigit():
-            if filter_key[1] == 'g':
-                deck_data = [card for card in deck_data if card['level'] > int(filter_key[2])]
-            elif filter_key[1] == 'k':
-                deck_data = [card for card in deck_data if card['level'] < int(filter_key[2])]
-            else:
-                deck_data = [card for card in deck_data if card['level'] == int(filter_key[1])]
+        if filter_key.startswith('l'):
+            try:
+                if 'g' in filter_key:
+                    level = int(filter_key[2:])
+                    deck_data = [card for card in deck_data if card['level'] > level]
+                elif 'k' in filter_key:
+                    level = int(filter_key[2:])
+                    deck_data = [card for card in deck_data if card['level'] < level]
+                else:
+                    level = int(filter_key[1:])
+                    deck_data = [card for card in deck_data if card['level'] == level]
+            except ValueError:
+                continue  # Falls ein ungültiger Filter auftaucht, überspringen
         elif filter_key.startswith('w') or filter_key.startswith('c'):
-            filter_time = get_filter_time(int(filter_key[2:-1]), filter_key[-1])
-            card_key = 'wiederholt' if filter_key.startswith('w') else 'erstellt'
-            if filter_key.startswith('wk') or filter_key.startswith('ck'):
-                deck_data = [card for card in deck_data if datetime.datetime.strptime(card[card_key], '%Y-%m-%d %H:%M:%S') >= filter_time]
-            else:
-                deck_data = [card for card in deck_data if datetime.datetime.strptime(card[card_key], '%Y-%m-%d %H:%M:%S') <= filter_time]
+            try:
+                filter_time = get_filter_time(int(filter_key[2:-1]), filter_key[-1])
+                card_key = 'wiederholt' if filter_key.startswith('w') else 'erstellt'
+                if filter_key.startswith('wk') or filter_key.startswith('ck'):
+                    deck_data = [card for card in deck_data if datetime.datetime.strptime(card[card_key], '%Y-%m-%d %H:%M:%S') >= filter_time]
+                else:
+                    deck_data = [card for card in deck_data if datetime.datetime.strptime(card[card_key], '%Y-%m-%d %H:%M:%S') <= filter_time]
+            except ValueError:
+                continue  # Falls ein ungültiger Filter auftaucht, überspringen
         elif filter_key == 'id':
             deck_data = [card for card in deck_data if card['id'] in filter_value]
     
@@ -114,11 +123,11 @@ def learn(deck_name, filters, sorters):
 
     for card in deck_data:
         clear_console()
-        if last_learned_card:
-            print(f"\nZuletzt gelernt:\n{last_learned_card['vorderseite']} ({last_learned_card['id']})\n")
+        # if last_learned_card:
+           # print(f"\nZuletzt gelernt:\n{last_learned_card['vorderseite']} ({last_learned_card['id']})\n")
         
-        print(f"{card['vorderseite']}")
-        input("")
+        print(f"{card['vorderseite']} ({card['level']})")  # Level-Anzeige nach Vorderseite
+        input("")  # Benutzer wartet, bevor die Rückseite angezeigt wird
         print(f"{card['rueckseite']}")
         
         answer = input("\nGewusst? (j/n/Level): ").lower()
@@ -136,11 +145,36 @@ def learn(deck_name, filters, sorters):
         
         last_learned_card = card
 
-
-    if last_learned_card:
-        print(f"\nZuletzt gelernt:\n{last_learned_card['vorderseite']} ({last_learned_card['id']})\n")
+    # if last_learned_card:
+       # print(f"\nZuletzt gelernt:\n{last_learned_card['vorderseite']} ({last_learned_card['id']})\n")
     print("Alle Karten im Deck durchgegangen!")
 
+
+
+
+def switch(deck_name):
+    if os.path.exists(f"{deck_name}.json"):
+        deck_data = load_deck(deck_name)
+        for card in deck_data:
+            card['vorderseite'], card['rueckseite'] = card['rueckseite'], card['vorderseite']
+        save_deck(deck_name, deck_data)
+        print(f"Vorder- und Rückseite im Deck '{deck_name}' wurden vertauscht.")
+    else:
+        print(f"Deck '{deck_name}' existiert nicht.")
+
+def reset(deck_name):
+    if os.path.exists(f"{deck_name}.json"):
+        confirmation = input(f"Geben Sie den Namen des Decks '{deck_name}' ein, um den Reset zu bestätigen: ").strip()
+        if confirmation == deck_name:
+            deck_data = load_deck(deck_name)
+            for card in deck_data:
+                card['level'] = 1
+            save_deck(deck_name, deck_data)
+            print(f"Alle Karten im Deck '{deck_name}' wurden auf Level 1 zurückgesetzt.")
+        else:
+            print("Bestätigung fehlgeschlagen. Reset abgebrochen.")
+    else:
+        print(f"Deck '{deck_name}' existiert nicht.")
 
 
 
@@ -148,21 +182,30 @@ def list_cards(deck_name, filters, sorters, show_back):
     deck_data = load_deck(deck_name)
 
     for filter_key, filter_value in filters.items():
-        if filter_key.startswith('l') and filter_key[1].isdigit():
-            if filter_key[1] == 'g':
-                deck_data = [card for card in deck_data if card['level'] > int(filter_key[2])]
-            elif filter_key[1] == 'k':
-                deck_data = [card for card in deck_data if card['level'] < int(filter_key[2])]
-            else:
-                deck_data = [card for card in deck_data if card['level'] == int(filter_key[1])]
-        elif filter_key.startswith('w') or filter_key.startswith('c'):
-            filter_time = get_filter_time(int(filter_key[2:-1]), filter_key[-1])
-            card_key = 'wiederholt' if filter_key.startswith('w') else 'erstellt'
-            if card_key in deck_data[0]:  # Überprüfen, ob der Schlüssel im ersten Karten-Dictionary existiert
-                if filter_key.startswith('wk') or filter_key.startswith('ck'):
-                    deck_data = [card for card in deck_data if datetime.datetime.strptime(card[card_key], '%Y-%m-%d %H:%M:%S') >= filter_time]
+        if filter_key.startswith('l'):
+            try:
+                if 'g' in filter_key:
+                    level = int(filter_key[2:])
+                    deck_data = [card for card in deck_data if card['level'] > level]
+                elif 'k' in filter_key:
+                    level = int(filter_key[2:])
+                    deck_data = [card for card in deck_data if card['level'] < level]
                 else:
-                    deck_data = [card for card in deck_data if datetime.datetime.strptime(card[card_key], '%Y-%m-%d %H:%M:%S') <= filter_time]
+                    level = int(filter_key[1:])
+                    deck_data = [card for card in deck_data if card['level'] == level]
+            except ValueError:
+                continue  # Falls ein ungültiger Filter auftaucht, überspringen
+        elif filter_key.startswith('w') or filter_key.startswith('c'):
+            try:
+                filter_time = get_filter_time(int(filter_key[2:-1]), filter_key[-1])
+                card_key = 'wiederholt' if filter_key.startswith('w') else 'erstellt'
+                if card_key in deck_data[0]:  # Überprüfen, ob der Schlüssel im ersten Karten-Dictionary existiert
+                    if filter_key.startswith('wk') or filter_key.startswith('ck'):
+                        deck_data = [card for card in deck_data if datetime.datetime.strptime(card[card_key], '%Y-%m-%d %H:%M:%S') >= filter_time]
+                    else:
+                        deck_data = [card for card in deck_data if datetime.datetime.strptime(card[card_key], '%Y-%m-%d %H:%M:%S') <= filter_time]
+            except ValueError:
+                continue  # Falls ein ungültiger Filter auftaucht, überspringen
         elif filter_key == 'id':
             deck_data = [card for card in deck_data if card['id'] in filter_value]
 
@@ -184,10 +227,15 @@ def list_cards(deck_name, filters, sorters, show_back):
 
     clear_console()
     for card in deck_data:
-        print(f"{card['vorderseite']}")
+        print(f"{card['vorderseite']} ({card['level']})")
         if show_back:
             print(f"  {card['rueckseite']}")
         print("")
+
+
+
+
+
 
 
 
@@ -198,6 +246,8 @@ def main():
     parser.add_argument("--learn", nargs='?', const=True, help="Lernen starten")
     parser.add_argument("--list", nargs='?', const=True, help="Karten anzeigen")
     parser.add_argument("--back", action='store_true', help="Rückseite anzeigen")
+    parser.add_argument("--switch", nargs='?', const=True, help="Vorder- und Rückseite tauschen")
+    parser.add_argument("--reset", nargs='?', const=True, help="Level aller Karten auf 1 zurücksetzen")
     
     # Filter- und Sortieroptionen
     parser.add_argument("-l1", action='store_true', help="Level 1 Karten")
@@ -309,21 +359,45 @@ def main():
                 sys.exit()
         if deck_name:
             list_cards(deck_name, filters, sorters, args.back)
-    
-    else:
-        decks = list_decks()
-        if len(decks) == 1:
-            learn(decks[0], filters, sorters)
-        elif len(decks) > 1:
-            print("Wählen Sie ein Deck:")
-            for i, deck in enumerate(decks, 1):
-                print(f"{i}. {deck}")
-            choice = input("Ihre Wahl: ")
-            if choice.isdigit() and 1 <= int(choice) <= len(decks):
-                learn(decks[int(choice) - 1], filters, sorters)
-        else:
-            print("Keine Decks gefunden.")
-            sys.exit()
+
+    elif args.switch is not None:
+        deck_name = args.switch if args.switch is not True else None
+        if not deck_name:
+            decks = list_decks()
+            if len(decks) == 1:
+                deck_name = decks[0]
+            elif len(decks) > 1:
+                print("Wählen Sie ein Deck:")
+                for i, deck in enumerate(decks, 1):
+                    print(f"{i}. {deck}")
+                choice = input("Ihre Wahl: ")
+                if choice.isdigit() and 1 <= int(choice) <= len(decks):
+                    deck_name = decks[int(choice) - 1]
+            else:
+                print("Keine Decks gefunden.")
+                sys.exit()
+        if deck_name:
+            switch(deck_name)
+
+    elif args.reset is not None:
+        deck_name = args.reset if args.reset is not True else None
+        if not deck_name:
+            decks = list_decks()
+            if len(decks) == 1:
+                deck_name = decks[0]
+            elif len(decks) > 1:
+                print("Wählen Sie ein Deck:")
+                for i, deck in enumerate(decks, 1):
+                    print(f"{i}. {deck}")
+                choice = input("Ihre Wahl: ")
+                if choice.isdigit() and 1 <= int(choice) <= len(decks):
+                    deck_name = decks[int(choice) - 1]
+            else:
+                print("Keine Decks gefunden.")
+                sys.exit()
+        if deck_name:
+            reset(deck_name)
+
 
 if __name__ == "__main__":
     main()
